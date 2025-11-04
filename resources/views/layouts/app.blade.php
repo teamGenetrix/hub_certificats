@@ -37,12 +37,12 @@
     padding-top: 40px;
     padding-bottom: 40px;
 ">
-                <a href="{{ route('admin.index') }}" class="logo-dark">
+                <a href="{{ route('admin.references.index') }}" class="logo-dark">
                     <img src="{{ asset('/assets/images/logo-sm.png') }}" class="logo-sm" alt="logo sm">
                     <img src="{{ asset('/assets/images/logo-dark.png') }}" class="logo-lg" alt="logo dark">
                 </a>
 
-                <a href="{{ route('admin.index') }}" class="logo-light">
+                <a href="{{ route('admin.references.index') }}" class="logo-light">
                     <img src="{{ asset('/assets/images/logo-sm.png') }}" class="logo-sm" alt="logo sm">
                     <img src="{{ asset('/assets/images/logo-light.png') }}" class="logo-lg" alt="logo light">
                 </a>

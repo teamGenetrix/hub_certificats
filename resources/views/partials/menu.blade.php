@@ -25,16 +25,6 @@
         <li class="menu-title">Gestion</li>
 
         <li class="nav-item">
-            <a class="nav-link {{ request()->routeIs('admin.sessions.*') ? 'active' : '' }}" 
-               href="{{ route('admin.sessions.index') }}">
-                <span class="nav-icon">
-                    <iconify-icon icon="solar:calendar-bold-duotone"></iconify-icon>
-                </span>
-                <span class="nav-text"> Sessions </span>
-            </a>
-        </li>
-
-        <li class="nav-item">
             <a class="nav-link {{ request()->routeIs('admin.participants.*') ? 'active' : '' }}" 
                href="{{ route('admin.participants.index') }}">
                 <span class="nav-icon">
@@ -44,6 +34,15 @@
             </a>
         </li>
 
+        <li class="nav-item">
+            <a class="nav-link {{ request()->routeIs('admin.sessions.*') ? 'active' : '' }}" 
+               href="{{ route('admin.sessions.index') }}">
+                <span class="nav-icon">
+                    <iconify-icon icon="solar:calendar-bold-duotone"></iconify-icon>
+                </span>
+                <span class="nav-text"> Sessions </span>
+            </a>
+        </li>
         <li class="menu-title">Références</li>
 
         {{-- <li class="nav-item">

@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Enrollment;
-use App\Models\Participant;
 use App\Models\Reference;
 use App\Models\Session;
 use App\Models\Training;
@@ -17,45 +16,50 @@ class ReferenceGeneratorService
     /**
      * Génère (ou retourne) la référence pour un enrollment (idempotent).
      *
-     * Format proposé : CC_DOCKIND_TRAININGCODE_MMYYYY_PILINC_GLOBINC
-     * Ex: CI_CER_INNOV-007-F_112025_0001_00042
+     * Format : CC_DOCKIND_TRAININGCODE_MMYYYY_PILINC_GLOBINC
+     * Ex     : CI_CER_INNOV-007-F_112025_0001_00042
      *
-     * @param  Enrollment $enrollment   Enrollment Eloquent (peut être une instance chargée)
-     * @param  string|null $countryCode Code pays (par défaut CI)
-     * @return Reference
+     * Règle de comptage :
+     *  - pillar_increment = total CER/ATT du pilier (toute l'histoire)
+     *  - global_increment = total CER/ATT global (toute l'histoire)
      */
     public function generateForEnrollment(Enrollment $enrollment, ?string $countryCode = 'CI'): Reference
     {
-        // Idempotence: si une référence existe déjà, on la retourne
+        // 1) Idempotence
         if ($enrollment->reference()->exists()) {
             return $enrollment->reference;
         }
 
-        // Pré-chargement des relations nécessaires
+        // 2) Pré-chargement des relations
         $enrollment->loadMissing(['session.training.pillar', 'participant']);
 
-        $session   = $enrollment->session;
-        $training  = $session->training;
-        $pillar    = $training->pillar;
+        $session     = $enrollment->session;
+        $training    = $session->training ?? null;
+        $pillar      = $training?->pillar;
         $participant = $enrollment->participant;
 
-        // Garde robuste sur end_date
-        $dt = Carbon::parse($session->end_date ?? now());
-        $monthYear = $dt->format('mY');
+        // Garde : données indispensables
+        if (!$training || !$pillar) {
+            throw new \RuntimeException('Training ou Pillar manquant pour la session.');
+        }
 
-        // doc_kind uniformisé
+        // 3) Date & période d’affichage
+        $dt        = Carbon::parse($session->end_date ?? now());
+        $monthYear = $dt->format('mY'); // ex '112025'
+
+        // 4) Type de document (convention actuelle : CER / ATT)
         $docKind = $training->has_exam ? 'CER' : 'ATT';
 
-        // Code formation : custom_code si custom, sinon code
+        // 5) Code formation : custom si présent
         $trainingCode = ($training->is_custom && $training->custom_code)
             ? $training->custom_code
             : $training->code;
 
-        // Compteurs atomiques (évite MAX+1 et les races)
-        $globalInc = AtomicCounter::next("GLOBAL:{$monthYear}");
-        $pillarInc = AtomicCounter::next("PILLAR:{$pillar->id}:{$monthYear}");
+        // 6) Compteurs atomiques (SANS scoper par mois)
+        $globalInc = AtomicCounter::next('GLOBAL');                        // total global
+        $pillarInc = AtomicCounter::next('PILLAR:' . $pillar->id);         // total du pilier
 
-        // Construction de la référence
+        // 7) Construction de la référence
         $referenceString = $this->formatReference(
             countryCode: strtoupper($countryCode ?? 'CI'),
             docKind: $docKind,
@@ -65,8 +69,9 @@ class ReferenceGeneratorService
             globalIncrement: $globalInc
         );
 
-        // Création de l'enregistrement Reference
+        // 8) Création de l'enregistrement
         return Reference::create([
+            'uuid'             => (string) Str::uuid(), // si ta table a la colonne uuid
             'doc_kind'         => $docKind,
             'reference'        => $referenceString,
             'month_year'       => $monthYear,
@@ -74,25 +79,23 @@ class ReferenceGeneratorService
             'pillar_increment' => $pillarInc,
             'pillar_id'        => $pillar->id,
             'enrollment_id'    => $enrollment->id,
-            'meta'             => [
-                'country_code'     => strtoupper($countryCode ?? 'CI'),
-                'training_code'    => $trainingCode,
-                'training_title'   => $training->title,
-                'pillar_name'      => $pillar->name,
-                'participant_name' => $participant?->full_name,
-                'participant_id'   => $participant?->id,
-                'session_id'       => $session->id,
-                'session_date'     => $dt->format('Y-m-d'),
-            ],
+            'meta'             => $this->buildMeta(
+                $countryCode,
+                $trainingCode,
+                $training->title,
+                $pillar->name,
+                $participant?->full_name,
+                $participant?->id,
+                $session->id,
+                $dt
+            ),
         ]);
     }
 
     /**
      * Génère des références pour TOUTES les inscriptions d'une session.
-     * Renvoie la liste des références créées (n’englobe pas celles déjà existantes).
+     * (Ne régénère pas celles déjà existantes.)
      *
-     * @param  Session $session
-     * @param  string|null $countryCode
      * @return array<Reference>
      */
     public function generateForSession(Session $session, ?string $countryCode = 'CI'): array
@@ -100,23 +103,19 @@ class ReferenceGeneratorService
         $session->loadMissing(['enrollments.participant', 'training.pillar']);
 
         $created = [];
-
-        // Ici, pas besoin de grosse transaction : l'allocation est atomique au niveau des compteurs
         foreach ($session->enrollments as $enrollment) {
             if ($enrollment->reference()->exists()) {
-                continue; // idempotence
+                continue;
             }
             $created[] = $this->generateForEnrollment($enrollment, $countryCode);
         }
-
         return $created;
     }
 
     /**
-     * Génère des références pour un tableau d'IDs d'enrollments.
+     * Génère des références pour une liste d'enrollments.
      *
      * @param  array<int> $enrollmentIds
-     * @param  string|null $countryCode
      * @return array<Reference>
      */
     public function generateForEnrollments(array $enrollmentIds, ?string $countryCode = 'CI'): array
@@ -126,23 +125,17 @@ class ReferenceGeneratorService
             ->get();
 
         $created = [];
-
         foreach ($enrollments as $enrollment) {
             if ($enrollment->reference()->exists()) {
                 continue;
             }
             $created[] = $this->generateForEnrollment($enrollment, $countryCode);
         }
-
         return $created;
     }
 
     /**
-     * Vérifie si une référence existe et renvoie l'objet enrichi.
-     * (Sans gestion d'alias ici — à brancher si vous avez un modèle LegacyAlias.)
-     *
-     * @param  string $referenceNumber
-     * @return Reference|null
+     * Vérifie l’existence d’une référence (pas d’alias ici).
      */
     public function verifyReference(string $referenceNumber): ?Reference
     {
@@ -152,7 +145,7 @@ class ReferenceGeneratorService
     }
 
     /**
-     * Export “tableau 2D” (prêt pour Excel) des références sélectionnées ou de toutes.
+     * Export tableau 2D (prêt pour CSV/Excel).
      *
      * @param  array<int> $referenceIds
      * @return array<int, array<int, string|null>>
@@ -170,7 +163,7 @@ class ReferenceGeneratorService
 
         $rows = $query->get();
 
-        $data = [];
+        $data   = [];
         $data[] = [
             'Numéro de Référence',
             'Type de Document',
@@ -213,23 +206,14 @@ class ReferenceGeneratorService
     }
 
     /**
-     * Statistiques rapides basées sur les nouvelles colonnes indexées.
-     *
-     * @return array{
-     *   total_references:int,
-     *   total_certificates:int,
-     *   total_attestations:int,
-     *   by_pillar:\Illuminate\Support\Collection,
-     *   by_month:\Illuminate\Support\Collection
-     * }
+     * Statistiques rapides (basées sur colonnes indexées).
      */
     public function getStatistics(): array
     {
-        $total      = Reference::count();
-        $totalCert  = Reference::where('doc_kind', 'CER')->count();
-        $totalAtt   = Reference::where('doc_kind', 'ATT')->count();
+        $total     = Reference::count();
+        $totalCer  = Reference::where('doc_kind', 'CER')->count();
+        $totalAtt  = Reference::where('doc_kind', 'ATT')->count();
 
-        // Stat par pilier (utilise pillar_id dénormalisé pour aller vite)
         $byPillar = DB::table('references')
             ->join('pillars', 'references.pillar_id', '=', 'pillars.id')
             ->select('pillars.name', DB::raw('COUNT(*) AS count'))
@@ -237,7 +221,6 @@ class ReferenceGeneratorService
             ->orderByDesc('count')
             ->get();
 
-        // Stat par mois (MMYYYY)
         $byMonth = DB::table('references')
             ->select('month_year', DB::raw('COUNT(*) AS count'))
             ->groupBy('month_year')
@@ -247,7 +230,7 @@ class ReferenceGeneratorService
 
         return [
             'total_references'   => $total,
-            'total_certificates' => $totalCert,
+            'total_certificates' => $totalCer,
             'total_attestations' => $totalAtt,
             'by_pillar'          => $byPillar,
             'by_month'           => $byMonth,
@@ -255,8 +238,7 @@ class ReferenceGeneratorService
     }
 
     /**
-     * Formatteur central du numéro de référence.
-     * Facile à changer si la règle évolue.
+     * Builder du numéro (facile à changer si la règle évolue).
      */
     protected function formatReference(
         string $countryCode,
@@ -275,5 +257,30 @@ class ReferenceGeneratorService
             $pillarIncrement,
             $globalIncrement
         );
+    }
+
+    /**
+     * Métadonnées de traçabilité.
+     */
+    protected function buildMeta(
+        ?string $countryCode,
+        string $trainingCode,
+        ?string $trainingTitle,
+        ?string $pillarName,
+        ?string $participantName,
+        ?int $participantId,
+        int $sessionId,
+        Carbon $sessionDate
+    ): array {
+        return [
+            'country_code'     => strtoupper($countryCode ?? 'CI'),
+            'training_code'    => $trainingCode,
+            'training_title'   => $trainingTitle,
+            'pillar_name'      => $pillarName,
+            'participant_name' => $participantName,
+            'participant_id'   => $participantId,
+            'session_id'       => $sessionId,
+            'session_date'     => $sessionDate->format('Y-m-d'),
+        ];
     }
 }

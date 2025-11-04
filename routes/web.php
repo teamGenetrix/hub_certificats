@@ -16,11 +16,6 @@ use Illuminate\Support\Facades\Route;
 // Auth::routes();
 
 Route::prefix('admin')->group(function () {
-    Route::get('/dashboard', [IndexController::class, 'index'])->name('admin.index');
-
-    Route::get('/formations', [FormationController::class, 'index'])->name('admin.formations.index');
-    Route::get('/formations/create', [FormationController::class, 'create'])->name('admin.formations.create');
-
     // Participant Management Routes
     Route::get('/participants/template', [ParticipantController::class, 'downloadTemplate'])->name('admin.participants.template');
     Route::post('/participants/import', [ParticipantController::class, 'import'])->name('admin.participants.import');
