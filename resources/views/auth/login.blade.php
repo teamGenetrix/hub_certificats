@@ -25,7 +25,7 @@
     <script src="{{ asset('/assets/js/config.js') }}"></script>
 </head>
 
-<body class="bg-primary d-flex justify-content-center align-items-center min-vh-100">
+<body class="bg-secondary d-flex justify-content-center align-items-center min-vh-100">
 
     <div class="container">
         <div class="row justify-content-center">
