@@ -8,9 +8,9 @@ use App\Http\Controllers\ReferenceController;
 use App\Http\Controllers\SessionController;
 use Illuminate\Support\Facades\Route;
 
-// Route::get('/', function () {
-//     return redirect()->route('login');
-// });
+Route::get('/', function () {
+    return redirect()->route('admin.references.index');
+});
 
 
 // Auth::routes();
