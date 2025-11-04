@@ -26,30 +26,32 @@
                 </div>
 
                 <!-- User -->
-                {{-- <div class="dropdown topbar-item">
+                <div class="dropdown topbar-item">
                     <a type="button" class="topbar-button" id="page-header-user-dropdown" data-bs-toggle="dropdown"
                         aria-haspopup="true" aria-expanded="false">
                         <span class="d-flex align-items-center">
-                            <img class="rounded-circle" width="32" src="https://placehold.co/800"
-                                alt="avatar-3">
+                            <iconify-icon icon="solar:user-circle-bold" class="fs-24 align-middle"></iconify-icon>
                         </span>
                     </a>
                     <div class="dropdown-menu dropdown-menu-end">
                         <!-- item-->
-                        <h6 class="dropdown-header">Welcome!</h6>
-                        <a class="dropdown-item" href="{{ route('admin.index') }}">
-                            <i class="bx bx-user-circle text-muted fs-18 align-middle me-1"></i><span
-                                class="align-middle">Profile</span>
-                        </a>
+                        <h6 class="dropdown-header">{{ Auth::user()->name }}</h6>
+                        <div class="dropdown-item disabled">
+                            <i class="bx bx-envelope text-muted fs-18 align-middle me-1"></i>
+                            <span class="align-middle">{{ Auth::user()->email }}</span>
+                        </div>
                         
                         <div class="dropdown-divider my-1"></div>
 
-                        <a class="dropdown-item text-danger" href="{{ route('logout') }}">
-                            <i class="bx bx-log-out fs-18 align-middle me-1"></i><span
-                                class="align-middle">Logout</span>
-                        </a>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="dropdown-item text-danger">
+                                <i class="bx bx-log-out fs-18 align-middle me-1"></i>
+                                <span class="align-middle">Déconnexion</span>
+                            </button>
+                        </form>
                     </div>
-                </div> --}}
+                </div>
             </div>
         </div>
     </div>
