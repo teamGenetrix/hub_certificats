@@ -1,7 +1,7 @@
 <head>
     <!-- Title Meta -->
     <meta charset="utf-8" />
-    <title>@@yield('title', 'Hub Certificats') | {{ env('APP_NAME') }}</title>
+    <title>@yield('title', 'Hub Certificats') | {{ env('APP_NAME') }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="A fully responsive premium admin dashboard template" />
     <meta name="author" content="Techzaa" />
@@ -33,7 +33,10 @@
         <div class="main-nav">
 
             <!-- Sidebar Logo -->
-            <div class="logo-box">
+            <div class="logo-box" style="
+    padding-top: 40px;
+    padding-bottom: 40px;
+">
                 <a href="{{ route('admin.index') }}" class="logo-dark">
                     <img src="{{ asset('/assets/images/logo-sm.png') }}" class="logo-sm" alt="logo sm">
                     <img src="{{ asset('/assets/images/logo-dark.png') }}" class="logo-lg" alt="logo dark">
@@ -77,19 +80,12 @@
     <!-- END Wrapper -->
 
 
-    
+
     <!-- Vendor Javascript (Require in all Page) -->
     <script src="{{ asset('/assets/js/vendor.js') }}"></script>
 
     <!-- App Javascript (Require in all Page) -->
     <script src="{{ asset('/assets/js/app.js') }}"></script>
 
-    <!-- Vector Map Js -->
-    <script src="{{ asset('/assets/vendor/jsvectormap/js/jsvectormap.min.js') }}"></script>
-    <script src="{{ asset('/assets/vendor/jsvectormap/maps/world-merc.js') }}"></script>
-    <script src="{{ asset('/assets/vendor/jsvectormap/maps/world.js') }}"></script>
-
-    <!-- Dashboard Js -->
-    <script src="{{ asset('/assets/js/pages/dashboard.js') }}"></script>
     @yield('scripts')
 </body>

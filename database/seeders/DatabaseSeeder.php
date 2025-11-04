@@ -15,11 +15,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Seed pillars first (required for trainings)
+        $this->call([
+            PillarSeeder::class,
+            TrainingSeeder::class,
+        ]);
 
+        // Create default admin user
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'Admin Genetrix',
+            'email' => 'admin@genetrix.com',
         ]);
     }
 }
