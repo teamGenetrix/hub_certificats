@@ -19,12 +19,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PillarSeeder::class,
             TrainingSeeder::class,
-        ]);
-
-        // Create default admin user
-        User::factory()->create([
-            'name' => 'Admin Genetrix',
-            'email' => 'admin@genetrix.com',
+            AdminUserSeeder::class,
         ]);
     }
 }

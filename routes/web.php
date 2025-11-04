@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\FormationController;
 use App\Http\Controllers\Admin\IndexController;
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\LegacyAliasController;
 use App\Http\Controllers\ParticipantController;
 use App\Http\Controllers\ReferenceController;
@@ -12,10 +13,12 @@ Route::get('/', function () {
     return redirect()->route('admin.references.index');
 });
 
+// Routes d'authentification
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [LoginController::class, 'login']);
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-// Auth::routes();
-
-Route::prefix('admin')->group(function () {
+Route::prefix('admin')->middleware('auth')->group(function () {
     // Participant Management Routes
     Route::get('/participants/template', [ParticipantController::class, 'downloadTemplate'])->name('admin.participants.template');
     Route::post('/participants/import', [ParticipantController::class, 'import'])->name('admin.participants.import');
