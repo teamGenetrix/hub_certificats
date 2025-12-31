@@ -11,6 +11,17 @@ class Pillar extends Model
 {
     use HasFactory, HasUuid;
 
+    // Si ton uuid est une string
+    protected $keyType = 'string';
+
+    // Si ton uuid n’est pas auto-increment, sinon laisse à false uniquement si tu utilises uuid comme PK
+    // public $incrementing = false;
+
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+
     protected $fillable = [
         'uuid',
         'name',

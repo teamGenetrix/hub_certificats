@@ -116,8 +116,8 @@
                                     </div>
                                     <small class="text-muted">
                                         <iconify-icon icon="solar:info-circle-bold-duotone" class="me-1"></iconify-icon>
-                                        Si coché, les références générées seront de type <strong>CER</strong> (Certificat),
-                                        sinon <strong>ATT</strong> (Attestation)
+                                        Si coché, les références générées seront de type <strong>(Certificat)</strong>,
+                                        sinon <strong>(Attestation)</strong>
                                     </small>
                                 </div>
                             </div>
