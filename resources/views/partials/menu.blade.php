@@ -88,9 +88,21 @@
             <a class="nav-link {{ request()->routeIs('admin.legacy-aliases.*') ? 'active' : '' }}" 
                href="{{ route('admin.legacy-aliases.index') }}">
                 <span class="nav-icon">
-                    <iconify-icon icon="solar:link-bold-duotone"></iconify-icon>
+                    <iconify-icon icon="solar:link-circle-bold-duotone"></iconify-icon>
                 </span>
-                <span class="nav-text"> Lier (Alias) </span>
+                <span class="nav-text">Alias (Liaison) </span>
+            </a>
+        </li>
+
+        <li class="menu-title">Paramètres</li>
+
+        <li class="nav-item">
+            <a class="nav-link {{ request()->routeIs('admin.configurations.*') ? 'active' : '' }}" 
+               href="{{ route('admin.configurations.index') }}">
+                <span class="nav-icon">
+                    <iconify-icon icon="solar:settings-bold-duotone"></iconify-icon>
+                </span>
+                <span class="nav-text"> Configurations </span>
             </a>
         </li>
     </ul>

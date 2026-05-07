@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\FormationController;
 use App\Http\Controllers\Admin\IndexController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\ConfigurationController;
 use App\Http\Controllers\LegacyAliasController;
 use App\Http\Controllers\ParticipantController;
 use App\Http\Controllers\ReferenceController;
@@ -84,4 +85,6 @@ Route::prefix('admin')->middleware('auth')->group(function () {
         'update' => 'admin.legacy-aliases.update',
         'destroy' => 'admin.legacy-aliases.destroy',
     ]);
+
+    Route::get('/configurations', [ConfigurationController::class, 'index'])->name('admin.configurations.index');
 });
